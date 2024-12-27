@@ -140,10 +140,7 @@ end
 V = arxstruc(dati_ident , dati_val , ordini_ARX);
 ordine_modello = selstruc(V , 'AIC');
 % Tramite la formula di complessità si è notato che il ritardo puro che dà
-% il modello migliore è pari a 1 e non a 5 (come osservato in precedenza.)
-% Si sono svolte delle prove con un ritardo puro a 5 ma il modello migliore
-% trovato tramite la formula di complessità risultava essere sempre
-% peggiore del modello utilizzato da qui in avanti
+% il modello migliore è pari a 1 e non a 5 (come osservato in precedenza), 
 
 %% Analisi del modello
 modello_arx = arx(dati_ident , ordine_modello);
