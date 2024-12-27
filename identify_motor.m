@@ -140,7 +140,7 @@ end
 V = arxstruc(dati_ident , dati_val , ordini_ARX);
 ordine_modello = selstruc(V , 'AIC');
 % Tramite la formula di complessità si è notato che il ritardo puro che dà
-% il modello migliore è pari a 1 e non a 5 (come osservato in precedenza.)
+% il modello migliore è pari a 1 e non a 5 (come osservato in precedenza).
 % Si sono svolte delle prove con un ritardo puro a 5 ma il modello migliore
 % trovato tramite la formula di complessità risultava essere sempre
 % peggiore del modello utilizzato da qui in avanti
@@ -156,60 +156,68 @@ compare(modello_arx , dati_val);
 figure
 resid(dati_val , modello_arx);
 
-%% Poli e Zeri
+%% Verifica Cancellazi tra poli e zeri
 h = iopzplot(modello_arx);
 showConfidence(h,3);
 
-% Non c'e nessuna cancellazione possibile
+% Non c'è nessuna possibile cancellazione
 
 %% Modello OE
 OE = oe(dati_ident , ordine_modello);
 
+% Analisi dei Residui
 figure
 resid(dati_val , OE);
+% Si osserva che la crosscorrelazione è molto buona, mentre
+% autocorrelazione non lo è (come ci aspettavamo).
 
+% Verifica se si possono effettuare delle riduzioni
 present(OE)
 
+% Comparazione del diagramma di bode con la stima non parametrica, si
+% osserva la parte esogena viene modellata bene.
 figure
 bodeplot(OE);
 hold on
 bodeplot(FDT_non_parametrica);
-
 xlim([1e-1 1e2]);
-
 legend(["OE" , "FdT non parametrica"]);
 
-% nosie
+% Analisi dello spettro, come ci si aspettava OE non modella questa parte
 figure
 spectrumplot(OE);
 hold on
 spectrumplot(FDT_non_parametrica);
-
 xlim([1e-1 1e2]);
 legend(["OE" , "FdT non parametrica"]);
-% A parte per un punto molto vicino all'intervallo l'croscorrelazione u-e è
-% buona
+
 
 %% Modellazione del rumore
 
-%Stimiamo il rumore
+% Stimiamo il rumore
 y_sim_OE = sim(OE, dati_val);
 errore_OE = dati_val.OutputData - y_sim_OE.OutputData;
 v_spec = spafdr(iddata(errore_OE));
 
-
+% plot dello spettro
 figure
-h = spectrumplot(v_spec);
+spectrumplot(v_spec);
 
-% Dallo spettro sembra che ci siano 2 poli e 2 zeri quindi:
+% Dall'analisi dello spettro si ipotizza di utilizzare 2 poli e 2 zeri
 ordini_BJ = [ordine_modello(2) , 2, 2, ordine_modello(1) , ordine_modello(3)];
 
+% Modello Box-Jenkins
 BJ = bj(dati_ident , ordini_BJ);
 
+% Verifica se si possono effettuare delle riduzioni
 present(BJ)
 
+% Analisi dei residui
 figure
 resid(dati_val , BJ);
+
+% In generale sia la parte esogena che la parte del disturbo vengono
+% modellate bene, seppur non ottimali.
 
 %% Confronto con stima non parametrica
 
