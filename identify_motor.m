@@ -15,7 +15,7 @@ set(0, 'defaultAxesFontSize', 14)
 set(0, 'defaultAxesTickLabelInterpreter','latex'); 
 set(0, 'defaultlegendInterpreter','latex')
 
-addpath("Dati\");
+addpath("Dati da usare per la stima\");
 
 %% import data
 dataAll = load("datamotor_2024-12-06_16_53_33.mat");
