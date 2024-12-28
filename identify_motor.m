@@ -33,28 +33,28 @@ y_raw_noise = dataAll.y; % output: motor speed [rpm]
 Ts = t_raw_step(2) - t_raw_step(1);
 
 % Valutazione del ritardo k, si osserva che il ritardo è di circa 5 passi
-plot(t_raw_step , y_raw_step , "DisplayName", "rpm");
+figure
 hold on
-plot(t_raw_step , u_raw_step ,"DisplayName","PWM");
+plot(t_raw_step , u_raw_step ,"DisplayName","PWM [$\%$]");
+plot(t_raw_step , y_raw_step , "DisplayName", "rpm $\left[ \frac{{giri}}{{min}}\right]$");
 title("Valutazione Ritardo");
 xlabel("Tempo [$s$]" , Interpreter="latex");
 xlim([11.0640 11.1290])
 ylim([0.0 54.9])
-ax = gca;
-chart = ax.Children(1);
-datatip(chart,11.08,50);
-chart = ax.Children(2);
-datatip(chart,11.11,20.23);
-legend(Location="southeast");
+rpmleftfracgiriminrightLine = findobj(gcf, "DisplayName", "rpm $\left[ \frac{{giri}}{{min}}\right]$");
+datatip(rpmleftfracgiriminrightLine,11.11,20.23);
+PWMLine = findobj(gcf, "DisplayName", "PWM [$\%$]");
+datatip(PWMLine,11.08,50);
+legend(Location="southeast" , Interpreter="latex");
 
-% si osserva un ritardo puro di 5 passi
+% Si osserva un ritardo puro di 5 passi
 ritardo = 5;
 
 % Plot dello scalino con rumore
 figure
-plot(t_raw_noise, y_raw_noise , "DisplayName" , "rpm");
 hold on
-plot(t_raw_noise , u_raw_noise , "DisplayName" , "PWM");
+plot(t_raw_noise , u_raw_noise , "DisplayName" , "PWM [$\%$]");
+plot(t_raw_noise, y_raw_noise , "DisplayName" , "rpm $\left[ \frac{{giri}}{{min}}\right]$");
 title("Scalino con Rumore");
 xlabel("Tempo [$s$]" , Interpreter="latex");
 legend(Location="southeast");
@@ -76,14 +76,14 @@ y_media = mean(y_noise);
 y_noise = y_noise - y_media;
 
 % Riscaliamo il tempo in modo che parta da 0, dopo aver tolto i secondi
-% iniziali (riferimento riga 60)
+% iniziali (riferimento riga 66)
 t_noise = t_noise - t_noise(1); 
 
 % plot dei segnali elaborati
 figure
-plot(t_noise , u_noise , DisplayName="PWM");
 hold on
-plot(t_noise , y_noise , DisplayName="rpm");
+plot(t_noise , u_noise , DisplayName="PWM [$\%$]");
+plot(t_noise , y_noise , DisplayName="rpm $\left[ \frac{{giri}}{{min}}\right]$");
 title("Segnali Elaborati");
 xlabel("Tempo [$s$]" , Interpreter="latex");
 legend();
@@ -143,7 +143,8 @@ ordine_modello = selstruc(V , 'AIC');
 % il modello migliore è pari a 1 e non a 5 (come osservato in precedenza).
 % Si sono svolte delle prove con un ritardo puro a 5 ma il modello migliore
 % trovato tramite la formula di complessità risultava essere sempre
-% peggiore del modello utilizzato da qui in avanti
+% peggiore del modello utilizzato da qui in avanti (ovvero quello con
+% ritardo puro pari a 1)
 
 %% Analisi del modello
 modello_arx = arx(dati_ident , ordine_modello);
@@ -221,6 +222,7 @@ resid(dati_val , BJ);
 
 %% Confronto con stima non parametrica
 
+% Plot dei diagrammi di bode per il confronto con la stima non parametrica
 figure
 bodeplot(BJ);
 hold on
@@ -228,6 +230,8 @@ bodeplot(FDT_non_parametrica)
 
 legend(["BJ" , "FdT non parametrica"]);
 
+% Plot dello spettro del rumore per il confronto con la stima non 
+% parametrica
 figure
 spectrumplot(BJ);
 hold on
@@ -235,24 +239,27 @@ spectrumplot(FDT_non_parametrica)
 
 legend(["BJ" , "FdT non parametrica"]);
 
-%% Simulazione dei modelli
+%% Simulazione dei tre modelli
 
+% Simulazione ARX
 y_arx = sim(modello_arx, dati_val);
 figure
 compare(modello_arx , dati_val);
 
+% Simulazione OE
 y_OE = sim(OE , dati_val);
 figure
 compare(OE, dati_val);
 
+% Simulazione BJ
 y_BJ = sim(BJ , dati_val);
 figure
 compare(BJ , dati_val);
 
-% Come ci aspettavamo BJ è il migliore... riaddestriamo il BJ sul data set
-% completo
+% Dalle simulazioni il Box-Jenkins è il migliore, lo riaddestriamo
+% sull'intero data set
 
-%% BJ completo
+%% BJ data set completo
 
 dati = iddata(y_noise_dec , u_noise_dec , Ts_dec);
 
@@ -262,6 +269,7 @@ BJ
 
 %% Results
 
+% Definiamo Ghat
 numerator_G = tf(BJ.B , 1 , Ts_dec);
 numerator_G.Variable = "z^-1";
 numerator_G.Denominator = 1;
@@ -272,7 +280,7 @@ denominator_G.Denominator = [0 1];
 
 Ghat = numerator_G/denominator_G % model of exogenous term G(z)
 
-
+% Definiamo Hhat
 numerator_H = tf(BJ.C , 1 , Ts_dec);
 numerator_H.Variable = "z^-1";
 numerator_H.Denominator = 1;
@@ -283,3 +291,36 @@ denominator_H.Denominator = 1;
 
 Hhat = numerator_H / denominator_H % model of noise term H(z)
 
+
+%% Buon Anno e Buone Feste
+% Dati per il triangolo (chioma dell'albero)
+x1 = [-2 0 2]; % Base del triangolo
+y1 = [0 3 0];  % Altezza del triangolo
+
+x2 = [-1.5 0 1.5];
+y2 = [1 4 1];
+
+x3 = [-1 0 1];
+y3 = [2 5 2];
+
+% Dati per il tronco
+x_tronco = [-0.5 0.5 0.5 -0.5];
+y_tronco = [0 -0.5 -1 -1];
+
+% Disegna l'albero
+figure;
+hold on;
+fill(x1, y1, [0 0.5 0], 'EdgeColor', 'none'); % Primo triangolo (verde)
+fill(x2, y2, [0 0.6 0], 'EdgeColor', 'none'); % Secondo triangolo (verde scuro)
+fill(x3, y3, [0 0.7 0], 'EdgeColor', 'none'); % Terzo triangolo (verde scuro)
+fill(x_tronco, y_tronco, [0.5 0.25 0], 'EdgeColor', 'none'); % Tronco (marrone)
+
+% Aggiungi decorazioni
+scatter(0, 5.2, 100, 'yellow', 'filled'); % Stella sulla punta
+scatter(rand(1, 10)*4-2, rand(1, 10)*3, 50, 'red', 'filled'); % Palline rosse
+
+% Migliora l'aspetto
+axis equal;
+axis([-3 3 -2 6]);
+title('Buone Feste!!');
+hold off;
